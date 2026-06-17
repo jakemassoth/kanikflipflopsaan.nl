@@ -41,7 +41,7 @@ No black boxes. Just honest, accountable footwear science. 🔬
 
 Not everyone has the same relationship with cold toes. Choose the vibe that matches your soul:
 
-- 🌲 **Boswachter** — The hardy forest ranger. High tolerance. Will happily flip-flop through a
+- 🏄 **Surf Dude** — The laid-back beach soul. High tolerance. Will happily flip-flop through a
   brisk, drizzly 16°C and call it a lovely day.
 - 🙂 **Gewoon mens** — The sensible default. A reasonable human with reasonable standards.
 - 🥶 **Koukleum** — Perpetually, eternally cold. Demands real warmth, bone-dry skies, and barely a

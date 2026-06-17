@@ -48,8 +48,8 @@ async fn handler(req: Request) -> Result<Response<ResponseBody>, Error> {
 
 #[derive(Clone, Copy)]
 enum Persona {
-    /// Boswachter — buitenmens, hoge tolerantie.
-    Boswachter,
+    /// Surf dude — relaxte buitenmens, hoge tolerantie.
+    SurfDude,
     /// Gewoon mens — de standaard.
     Gewoon,
     /// Koukleum — heeft het altijd koud, lage tolerantie.
@@ -68,7 +68,7 @@ struct Thresholds {
 impl Persona {
     fn id(self) -> &'static str {
         match self {
-            Persona::Boswachter => "boswachter",
+            Persona::SurfDude => "surfdude",
             Persona::Gewoon => "gewoon",
             Persona::Koukleum => "koukleum",
         }
@@ -77,7 +77,7 @@ impl Persona {
     fn thresholds(self) -> Thresholds {
         match self {
             // Hoge tolerantie: het mag kouder, harder waaien en wat natter zijn.
-            Persona::Boswachter => Thresholds {
+            Persona::SurfDude => Thresholds {
                 min_temp_c: 16.0,
                 max_precip_probability: 80.0,
                 max_precip_mm: 5.0,
@@ -115,7 +115,7 @@ fn persona_from(req: &Request) -> Persona {
         .and_then(|q| q.split('&').find_map(|kv| kv.strip_prefix("persona=")));
 
     match value {
-        Some("boswachter") => Persona::Boswachter,
+        Some("surfdude") => Persona::SurfDude,
         Some("koukleum") => Persona::Koukleum,
         _ => Persona::Gewoon,
     }
