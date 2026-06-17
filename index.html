@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kan ik flip flops aan?</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    transition: background 0.4s ease, color 0.4s ease;
+    /* neutral while loading */
+    background: #e2e8f0;
+    color: #334155;
+  }
+  /* Verdict palettes, applied to <body> once the answer is known. */
+  body.ja  { background: linear-gradient(160deg,#ffd54a 0%,#ff9d2f 60%,#ff6b35 100%); color: #5a2e00; }
+  body.nee { background: linear-gradient(160deg,#6b7a8f 0%,#48566b 60%,#2d3748 100%); color: #f1f5f9; }
+
+  .card { width: 100%; max-width: 460px; text-align: center; }
+  .vraag { font-size: 1.1rem; opacity: 0.85; margin-bottom: 0.5rem; }
+  .antwoord { font-size: clamp(4rem, 22vw, 8rem); font-weight: 800; line-height: 1; margin: 0; }
+  body.ja  .antwoord { color: #1b7a1b; }
+  body.nee .antwoord { color: #e53e3e; }
+  .emoji { font-size: clamp(2.5rem, 12vw, 4rem); margin: 0.5rem 0 1.25rem; min-height: 1em; }
+  .footer { margin-top: 1.25rem; font-size: 0.85rem; opacity: 0.75; }
+  a { color: inherit; }
+
+  /* Decision tree — only shown once a verdict is known. */
+  .factoren { display: none; list-style: none; padding: 1rem 1.25rem; margin: 0 auto;
+    text-align: left; background: rgba(255,255,255,0.18); border-radius: 16px; }
+  body.ja .factoren, body.nee .factoren { display: block; }
+  .factoren li { display: grid; grid-template-columns: 1.4rem 1fr; align-items: baseline;
+    gap: 0.5rem; padding: 0.4rem 0; }
+  .factoren li + li { border-top: 1px solid rgba(255,255,255,0.18); }
+  .factoren .mark { font-weight: 800; }
+  .factoren .ck-label { font-weight: 600; }
+  .factoren .ck-detail { opacity: 0.9; font-size: 0.9rem; }
+
+  .persona { margin: 0 0 1.5rem; font-size: 0.95rem; }
+  .persona label { opacity: 0.85; margin-right: 0.4rem; }
+  .persona select {
+    font: inherit;
+    padding: 0.35rem 0.6rem;
+    border-radius: 10px;
+    border: 1px solid rgba(0,0,0,0.15);
+    background: rgba(255,255,255,0.85);
+    color: #1f2937;
+    cursor: pointer;
+  }
+
+  /* Only one of these is shown at a time, driven by the body class. */
+  .state { display: none; }
+  body.laden   .state-laden,
+  body.ja      .state-ja,
+  body.nee     .state-nee,
+  body.fout    .state-fout { display: block; }
+</style>
+</head>
+<body class="laden">
+  <main class="card">
+    <p class="vraag">Kan ik flip flops aan?</p>
+
+    <div class="persona">
+      <label for="persona">Wie ben jij?</label>
+      <select id="persona">
+        <option value="boswachter">Boswachter</option>
+        <option value="gewoon" selected>Gewoon mens</option>
+        <option value="koukleum">Koukleum</option>
+      </select>
+    </div>
+
+    <div class="state state-laden">
+      <h1 class="antwoord">…</h1>
+      <div class="emoji">⏳</div>
+    </div>
+
+    <div class="state state-ja">
+      <h1 class="antwoord">Ja!</h1>
+      <div class="emoji">🩴☀️</div>
+    </div>
+
+    <div class="state state-nee">
+      <h1 class="antwoord">Nee</h1>
+      <div class="emoji">🌧️🥾</div>
+    </div>
+
+    <div class="state state-fout">
+      <h1 class="antwoord">🤷</h1>
+      <div class="emoji">Geen idee</div>
+      <p>Het weer van De Bilt kon even niet worden opgehaald. Probeer het zo nog eens.</p>
+    </div>
+
+    <ul class="factoren" id="factoren"></ul>
+
+    <p class="footer">Dagverwachting De Bilt · Bron: KNMI via <a href="https://open-meteo.com">Open-Meteo</a></p>
+  </main>
+
+  <script>
+    const select = document.getElementById('persona');
+    const lijst = document.getElementById('factoren');
+
+    // Remember the visitor's last choice.
+    const saved = localStorage.getItem('persona');
+    if (saved) select.value = saved;
+
+    function renderFactoren(factoren) {
+      lijst.innerHTML = (factoren || []).map(f => `
+        <li>
+          <span class="mark" style="color:${f.ok ? '#1b7a1b' : '#e53e3e'}">${f.ok ? '✓' : '✗'}</span>
+          <span><span class="ck-label">${f.label}</span><br>
+          <span class="ck-detail">${f.detail}</span></span>
+        </li>`).join('');
+    }
+
+    async function laadVerdict() {
+      const body = document.body;
+      const persona = select.value;
+      body.className = 'laden';
+      try {
+        const res = await fetch('/api/index?persona=' + encodeURIComponent(persona), { cache: 'no-store' });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        const verdict = data.verdict === 'ja' ? 'ja' : data.verdict === 'nee' ? 'nee' : null;
+        if (!verdict) throw new Error('onbekend verdict');
+        renderFactoren(data.factoren);
+        body.className = verdict;
+      } catch (e) {
+        body.className = 'fout';
+      }
+    }
+
+    select.addEventListener('change', () => {
+      localStorage.setItem('persona', select.value);
+      laadVerdict();
+    });
+
+    laadVerdict();
+  </script>
+</body>
+</html>

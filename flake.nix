@@ -24,6 +24,7 @@
           buildInputs = [
             rustToolchain
             pkgs.pkg-config
+            pkgs.nodejs # for the Vercel CLI: `npx vercel dev` / `npx vercel deploy`
           ];
 
           env = {
